@@ -25,12 +25,9 @@
       };
 
       flake = {
-        nixosModules.recovery = {
-          config,
-          pkgs,
-          ...
-        }: {
-          environment.systemPackages = with pkgs; [recoveryctl];
+        nixosModules = rec {
+          recovery = import ./module;
+          default = recovery;
         };
 
         nixosConfigurations."tester" = nixpkgs.lib.nixosSystem {
@@ -46,7 +43,14 @@
               nixpkgs.overlays = [self.overlays.recovery];
               system.stateVersion = "24.11";
               environment.systemPackages = with pkgs; [git];
-              boot.isContainer = true;
+              boot = {
+                isContainer = true;
+                recovery = {
+                  enable = true;
+
+                  install = true;
+                };
+              };
             })
           ];
         };
