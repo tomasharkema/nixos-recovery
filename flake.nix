@@ -19,5 +19,21 @@
           default = recoveryctl;
         };
       };
+
+      flake = {
+        nixosModules.recovery = {
+          config,
+          pkgs,
+          ...
+        }: {
+          environment.systemPackages = with pkgs; [recoveryctl];
+        };
+        overlays = rec {
+          recovery = final: prev: {
+            recoveryctl = inputs.nixos-recovery.packages."${prev.system}".recoveryctl;
+          };
+          default = recovery;
+        };
+      };
     };
 }
