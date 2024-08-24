@@ -2,11 +2,10 @@
   config,
   pkgs,
   lib,
-  self,
+  inputs,
   ...
 } @ attrs:
 with lib; let
-  inputs = self.inputs;
   defaultSystem = inputs.nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
 
