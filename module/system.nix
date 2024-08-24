@@ -1,9 +1,5 @@
-{
-  self,
-  inputs,
-  ...
-}:
-self.inputs.nixpkgs.lib.nixosSystem {
+{inputs, ...}:
+inputs.nixpkgs.lib.nixosSystem {
   system = "x86_64-linux";
 
   specialArgs = {

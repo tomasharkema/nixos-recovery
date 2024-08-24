@@ -7,7 +7,7 @@
 } @ attrs:
 with lib; let
   inputs = self.inputs;
-  defaultSystem = (import ./system.nix) (attrs // {inherit inputs;});
+  defaultSystem = (import ./system.nix) attrs;
 in {
   options.boot.recovery = {
     enable = mkEnableOption "enable recovery";
