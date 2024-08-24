@@ -1,0 +1,15 @@
+name: "test"
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: "ubuntu-latest"
+    permissions:
+      id-token: "write"
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "DeterminateSystems/nix-installer-action@main"
+      - name: "build"
+        run: nix build '.#nixosConfigurations.tester.config.system.build.toplevel' --show-trace -L --verbose --refresh
