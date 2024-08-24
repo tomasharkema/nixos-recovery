@@ -9,7 +9,11 @@
     };
   };
 
-  outputs = inputs:
+  outputs = {
+    nixpkgs,
+    self,
+    ...
+  } @ inputs:
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux"];
 
@@ -28,9 +32,28 @@
         }: {
           environment.systemPackages = with pkgs; [recoveryctl];
         };
+
+        nixosConfigurations."tester" = nixpkgs.lib.nixosSystem {
+          specialArgs = inputs;
+          system = "x86_64-linux";
+          modules = [
+            self.nixosModules.recovery
+            ({
+              config,
+              pkgs,
+              ...
+            }: {
+              nixpkgs.overlays = [self.overlays.recovery];
+              system.stateVersion = "24.11";
+              environment.systemPackages = with pkgs; [git];
+              boot.isContainer = true;
+            })
+          ];
+        };
+
         overlays = rec {
           recovery = final: prev: {
-            recoveryctl = inputs.nixos-recovery.packages."${prev.system}".recoveryctl;
+            recoveryctl = self.packages."${prev.system}".recoveryctl;
           };
           default = recovery;
         };
