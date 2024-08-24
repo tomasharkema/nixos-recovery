@@ -20,6 +20,8 @@ jobs:
         with:
           ref: "${{ (inputs.tag != null) && format('refs/tags/{0}', inputs.tag) || '' }}"
       - uses: "DeterminateSystems/nix-installer-action@main"
+      - name: "build"
+        run: nix build '.#nixosConfigurations.tester.config.system.build.toplevel' --show-trace -L --verbose --refresh
       - uses: "DeterminateSystems/flakehub-push@main"
         with:
           visibility: "public"
