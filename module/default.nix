@@ -14,7 +14,6 @@ with lib; let
     };
     modules = [
       "${inputs.nixpkgs}/nixos/modules/installer/netboot/netboot-minimal.nix"
-      # ./installer.nix
 
       (
         {
@@ -56,14 +55,14 @@ in {
     nixosDir = "/EFI/nixos";
     entries = {
       "netbootxyz.conf" = ''
-        title  netboot.xyz
-        efi    /efi/netbootxyz/netboot.xyz.efi
-        sort-key netbootxyz
+        title     netboot.xyz
+        efi       /efi/netbootxyz/netboot.xyz.efi
+        sort-key  netbootxyz
       '';
       "recovery.conf" = ''
-        title  NixOS Recovery
-        efi    /efi/recovery/recovery.efi
-        sort-key nixosrecovery
+        title     NixOS Recovery
+        efi       /efi/recovery/recovery.efi
+        sort-key  nixosrecovery
       '';
     };
     bootMountPoint = efi.efiSysMountPoint;

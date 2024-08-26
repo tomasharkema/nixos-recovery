@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/tomasharkema/nixos-recovery/recoveryctl/startup"
@@ -17,11 +19,14 @@ var (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	println("verbose", *verbose)
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	// Register user
 	case startupCmd.FullCommand():
-		startup.Startup(*now)
+		startup.Startup(ctx, *now)
 	}
 }
