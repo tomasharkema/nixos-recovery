@@ -3,13 +3,17 @@ on:
   push:
 
 jobs:
-  test:
+  test-integration:
     runs-on: "ubuntu-latest"
-    permissions:
-      id-token: "write"
-      contents: "read"
     steps:
       - uses: "actions/checkout@v4"
       - uses: "DeterminateSystems/nix-installer-action@main"
       - name: "build"
         run: nix build '.#nixosConfigurations.tester.config.system.build.toplevel' --show-trace -L --verbose --refresh
+  test:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "DeterminateSystems/nix-installer-action@main"
+      - name: "build"
+        run: nix build '.#recoveryctl' --show-trace -L --verbose --refresh
