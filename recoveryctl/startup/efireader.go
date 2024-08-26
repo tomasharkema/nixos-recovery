@@ -6,9 +6,9 @@ import (
 	"regexp"
 )
 
-var lineRegex = regexp.MustCompile("(Boot([0-9A-F]{4}))(\\*)?\\s(.*)[\\t](.*)$")
+var lineRegex = regexp.MustCompile(`(Boot([0-9A-F]{4}))(\*)?\s(.*)[\t](.*)$`)
 
-type Result struct {
+type BootEntry struct {
 	BootEntry string
 	BootNum   string
 	Star      string
@@ -18,13 +18,12 @@ type Result struct {
 
 type Scanner struct {
 	r        *bufio.Scanner
-	token    Result
+	token    BootEntry
 	match    []string
 	currText string
 }
 
 func NewScanner(r io.Reader) *Scanner {
-
 	return &Scanner{
 		r: bufio.NewScanner(r),
 	}
@@ -43,7 +42,7 @@ func (s *Scanner) Scan() bool {
 
 	if len(s.match) > 2 {
 
-		s.token = Result{
+		s.token = BootEntry{
 			s.match[1], s.match[2], s.match[3], s.match[4], s.match[5],
 		}
 		return true
@@ -52,6 +51,6 @@ func (s *Scanner) Scan() bool {
 	return s.Scan()
 }
 
-func (s *Scanner) Text() Result {
+func (s *Scanner) Text() BootEntry {
 	return s.token
 }

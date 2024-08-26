@@ -3,12 +3,17 @@ package startup
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"log"
+	"errors"
+	"strings"
+
 	"os/exec"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func bootMgr(ctx context.Context, buffer *bytes.Buffer, arg ...string) error {
+
+	log.Infoln("Execute efibootmgr", arg)
 
 	cmd := exec.CommandContext(ctx, "efibootmgr", arg...)
 
@@ -31,31 +36,38 @@ func bootNext(ctx context.Context, next string) {
 	bootMgr(ctx, nil, "-n", next)
 }
 
-func bootList(ctx context.Context) error {
+func bootList(ctx context.Context) (*BootEntry, error) {
 	var buffer bytes.Buffer
 	err := bootMgr(ctx, &buffer)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	lineScanner := NewScanner(&buffer)
 
 	for lineScanner.Scan() {
-		txt := lineScanner.Text()
-		fmt.Println("line", txt)
+		entry := lineScanner.Text()
+		log.Infoln("Found line:", entry)
+
+		if strings.HasSuffix(entry.Device, `\EFI\recovery.efi`) {
+			log.Infoln("Found recovery entry:", entry)
+			return &entry, nil
+		}
 	}
-	return nil
+	return nil, errors.New("no entry found")
 }
 
 func Startup(ctx context.Context, now bool) {
 
-	println("startup")
-	err := bootList(ctx)
+	log.Infoln("startup", "now", now)
+	entry, err := bootList(ctx)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	log.Infoln("entry", entry)
 	// bootMgr(ctx, "")
 
 }

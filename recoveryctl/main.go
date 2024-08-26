@@ -7,6 +7,8 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/tomasharkema/nixos-recovery/recoveryctl/startup"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -14,19 +16,26 @@ var (
 
 	verbose = app.Flag("verbose", "Verbose mode.").Short('v').Bool()
 
-	startupCmd = app.Command("startup", "Reboot into recovery mode")
-	now        = startupCmd.Flag("now", "Reboot now").Bool()
+	startupCmd = app.Command("startup", "Reboot into recovery mode.")
+	now        = startupCmd.Flag("now", "Reboot now.").Bool()
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	p := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	println("verbose", *verbose)
+	if *verbose {
+		log.SetLevel(log.DebugLevel)
+		log.Infoln("Set verbose mode!")
 
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	// Register user
+	} else {
+		log.SetLevel(log.WarnLevel)
+	}
+
+	switch p {
 	case startupCmd.FullCommand():
+		log.Infoln("Run startup command...")
 		startup.Startup(ctx, *now)
 	}
 }
