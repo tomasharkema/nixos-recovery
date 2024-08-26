@@ -10,7 +10,7 @@ buildGoModule rec {
 
   src = ./.;
 
-  vendorHash = "sha256-Qx6m4jauCcK5ADB9RSf770Pv4XMZEcnvXaZZW2/F9hk="; # "sha256-THOTzWban6ZdGYV+qEH8AAyddvtHhPOekCamehXxHLY=";
+  vendorHash = "sha256-Qx6m4jauCcK5ADB9RSf770Pv4XMZEcnvXaZZW2/F9hk=";
 
   CGO_ENABLED = 1;
 
