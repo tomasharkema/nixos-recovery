@@ -4,59 +4,64 @@
   lib,
   inputs,
   ...
-} @ attrs:
-with lib; let
+}: let
+  cfg = config.boot.recovery;
   defaultSystem = inputs.nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
 
     specialArgs = {
       inherit inputs;
     };
-    modules = [
-      "${inputs.nixpkgs}/nixos/modules/installer/netboot/netboot-minimal.nix"
-      # ./installer.nix
+    modules =
+      [
+        "${inputs.nixpkgs}/nixos/modules/installer/netboot/netboot-minimal.nix"
+        # ./installer.nix
 
-      (
-        {
-          lib,
-          pkgs,
-          config,
-          ...
-        }: {
-          config = {
-            boot = {
-              supportedFilesystems.zfs = lib.mkForce false;
+        (
+          {
+            lib,
+            pkgs,
+            config,
+            ...
+          }: {
+            config = {
+              boot = {
+                supportedFilesystems.zfs = lib.mkForce false;
+              };
+              system.stateVersion = config.system.nixos.release;
+              netboot.squashfsCompression = "zstd -Xcompression-level 22";
+              networking.wireless.enable = true;
             };
-            system.stateVersion = config.system.nixos.release;
-            netboot.squashfsCompression = "zstd -Xcompression-level 22";
-            networking.wireless.enable = true;
-          };
-        }
-      )
-    ];
+          }
+        )
+      ]
+      ++ cfg.extraConfigurations;
   };
 in {
   options.boot.recovery = {
-    enable = mkEnableOption "enable recovery";
+    enable = lib.mkEnableOption "enable recovery";
 
-    configuration = mkOption {
+    configuration = lib.mkOption {
       default = defaultSystem;
     };
 
-    sign = mkEnableOption "sign";
+    extraConfigurations = lib.mkOption {
+      default = [];
+    };
 
-    install = mkEnableOption "install";
+    sign = lib.mkEnableOption "sign";
 
-    netboot.enable = mkEnableOption "netboot";
+    install = lib.mkEnableOption "install";
+
+    netboot.enable = lib.mkEnableOption "netboot";
   };
 
   config = let
-    cfg = config.boot.recovery;
     efi = config.boot.loader.efi;
     lanza = config.boot.lanzaboote.pkiBundle;
     nixosDir = "/EFI/nixos";
     entries = {
-      "netbootxyz.conf" = ''
+      "netbootxyz.conf" = lib.mkIf cfg.netboot.enable ''
         title  netboot.xyz
         efi    /efi/netbootxyz/netboot.xyz.efi
         sort-key netbootxyz
@@ -84,7 +89,7 @@ in {
       inherit kernelVersion;
     });
   in
-    mkIf cfg.enable {
+    lib.mkIf cfg.enable {
       # pkgs.stdenvNoCC.mkDerivation {
       #   name = "splash.xpm.gz";
       #   src = ./nix-snowflake-rainbow-svg.xpm;
@@ -101,7 +106,7 @@ in {
         build = {
           splash = ./nix-snowflake-rainbow-svg.xpm;
 
-          recoveryImage = pkgs.stdenvNoCC.mkDerivation {
+          recoveryImage = pkgs.stdenv.mkDerivation {
             name = "recovery.efi";
             src = installer;
             # version = "1.0.0";
@@ -110,6 +115,7 @@ in {
 
             buildInputs = with pkgs; [systemdUkify];
 
+            # --splash="${config.system.build.splash}" \
             installPhase = ''
               ukify build \
                 --linux="${installer}/kernel" \
@@ -117,41 +123,42 @@ in {
                 --uname="${kernelVersion}" \
                 --os-release="${installer}/etc/os-release" \
                 --cmdline="debug init=${installer}/init" \
-                --splash="${config.system.build.splash}" \
                 --measure \
                 --output=$out
             '';
           };
         };
 
-        activationScripts = mkIf cfg.install {
+        activationScripts = lib.mkIf cfg.install {
           recovery.text = let
             recov = pkgs.writeShellScript "recovery.sh" ''
 
               if ! ${pkgs.diffutils}/bin/diff "${configFile}" "${bootMountPoint}/EFI/recovery/config.json" > /dev/null 2>&1; then
                 ${pkgs.coreutils}/bin/install -D "${config.system.build.recoveryImage}" "${bootMountPoint}/EFI/recovery/recovery.efi"
-                ${optionalString cfg.sign ''
+                ${lib.optionalString cfg.sign ''
                 ${pkgs.sbctl}/bin/sbctl sign -s "${bootMountPoint}/EFI/recovery/recovery.efi"
               ''}
 
                 ${pkgs.coreutils}/bin/install -D "${configFile}" "${bootMountPoint}/EFI/recovery/config.json"
 
+                ${lib.optionalString cfg.netboot.enable ''
                 ${pkgs.coreutils}/bin/install -D "${pkgs.netbootxyz-efi}" "${bootMountPoint}/EFI/netbootxyz/netboot.xyz.efi"
+              ''}
 
-                ${optionalString cfg.sign ''
+                ${lib.optionalString cfg.sign ''
                 ${pkgs.sbctl}/bin/sbctl sign -s "${bootMountPoint}/EFI/netbootxyz/netboot.xyz.efi"
               ''}
               fi
 
               empty_file=$(${pkgs.coreutils}/bin/mktemp)
-              ${concatStrings (mapAttrsToList (n: v: let
+              ${lib.concatStrings (lib.mapAttrsToList (n: v: let
                   src = "${pkgs.writeText n v}";
-                  dest = "${bootMountPoint}/loader/entries/${escapeShellArg n}";
+                  dest = "${bootMountPoint}/loader/entries/${lib.escapeShellArg n}";
                 in ''
                   if ! ${pkgs.diffutils}/bin/diff "${src}" "${dest}" > /dev/null 2>&1; then
 
                     ${pkgs.coreutils}/bin/install -Dp "${src}" "${dest}"
-                    ${pkgs.coreutils}/bin/install -D $empty_file "${bootMountPoint}/${nixosDir}/.extra-files/loader/entries/"${escapeShellArg n}
+                    ${pkgs.coreutils}/bin/install -D $empty_file "${bootMountPoint}/${nixosDir}/.extra-files/loader/entries/"${lib.escapeShellArg n}
 
                   fi
                 '')
