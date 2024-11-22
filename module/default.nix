@@ -60,7 +60,7 @@ in {
     efi = config.boot.loader.efi;
     nixosDir = "/EFI/nixos";
     entries = {
-      "netbootxyz.conf" = lib.mkIf cfg.netboot.enable ''
+      "netbootxyz.conf" = ''
         title  netboot.xyz
         efi    /efi/netbootxyz/netboot.xyz.efi
         sort-key netbootxyz
