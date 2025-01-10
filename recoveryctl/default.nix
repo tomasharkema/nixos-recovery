@@ -10,9 +10,9 @@ buildGoModule rec {
 
   src = ./.;
 
-  vendorHash = "sha256-THOTzWban6ZdGYV+qEH8AAyddvtHhPOekCamehXxHLY=";
+  vendorHash = "sha256-HtIUGfo8Q75JMsnD5X3kGrB18BBYPBMbJ70bhy32vDU=";
 
-  CGO_ENABLED = 1;
+  env.CGO_ENABLED = 1;
 
   nativeBuildInputs = [makeWrapper efibootmgr];
 
