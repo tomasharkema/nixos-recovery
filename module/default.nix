@@ -25,6 +25,7 @@ in {
   config = let
     cfg = config.boot.recovery;
     efi = config.boot.loader.efi;
+    lanza = config.boot.lanzaboote.pkiBundle;
     nixosDir = "/EFI/nixos";
     entries = {
       "netbootxyz.conf" = ''
