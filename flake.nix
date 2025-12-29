@@ -40,7 +40,7 @@
 
         overlays = rec {
           recovery = final: prev: {
-            recoveryctl = inputs.self.packages."${prev.system}".recoveryctl;
+            recoveryctl = inputs.self.packages."${prev.stdenv.hostPlatform.system}".recoveryctl;
           };
           default = recovery;
         };

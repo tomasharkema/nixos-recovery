@@ -5,8 +5,9 @@
   ...
 }: {
   nixpkgs.overlays = [self.overlays.recovery];
-  system.stateVersion = "24.11";
+  system.stateVersion = "26.05";
   environment.systemPackages = with pkgs; [git];
+  networking.networkmanager.enable = false;
   boot = {
     isContainer = true;
     recovery = {

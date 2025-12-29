@@ -26,11 +26,14 @@
           }: {
             config = {
               boot = {
-                supportedFilesystems.zfs = lib.mkForce false;
+                supportedFilesystems = {
+                  zfs = lib.mkForce false;
+                  nfs = true;
+                };
               };
               system.stateVersion = config.system.nixos.release;
-              netboot.squashfsCompression = "zstd -Xcompression-level 22";
-              networking.wireless.enable = true;
+              #netboot.squashfsCompression = "zstd -Xcompression-level 22";
+              #networking.wireless.enable = true;
             };
           }
         )
@@ -129,8 +132,8 @@ in {
         };
 
         activationScripts = lib.mkIf cfg.install {
-          recovery.text = let
-            recov = pkgs.writeShellScript "recovery.sh" ''
+          recovery = let
+            recov = pkgs.writeShellScript "recovery" ''
 
               if ! ${pkgs.diffutils}/bin/diff "${configFile}" "${bootMountPoint}/EFI/recovery/config.json" > /dev/null 2>&1; then
                 ${pkgs.coreutils}/bin/install -D "${config.system.build.recoveryImage}" "${bootMountPoint}/EFI/recovery/recovery.efi"
@@ -174,7 +177,12 @@ in {
               fi
 
             '';
-          in "${recov}";
+          in
+            lib.stringAfter [
+              "users"
+              "groups"
+              "specialfs"
+            ] "${recov}";
         };
       };
     };
