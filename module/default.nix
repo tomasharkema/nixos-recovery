@@ -111,7 +111,7 @@ in {
           recoveryImage = pkgs.stdenv.mkDerivation {
             name = "recovery.efi";
             src = installer;
-            # version = "1.0.0";
+            version = "0.0.8";
 
             dontPatch = true;
 
@@ -133,7 +133,8 @@ in {
 
         activationScripts = lib.mkIf cfg.install {
           recovery = let
-            recov = pkgs.writeShellScript "recovery" ''
+            recov = ''
+              echo "Install recovery script... $NIXOS_ACTION"
 
               if ! ${pkgs.diffutils}/bin/diff "${configFile}" "${bootMountPoint}/EFI/recovery/config.json" > /dev/null 2>&1; then
                 ${pkgs.coreutils}/bin/install -D "${config.system.build.recoveryImage}" "${bootMountPoint}/EFI/recovery/recovery.efi"
@@ -177,12 +178,15 @@ in {
               fi
 
             '';
-          in
-            lib.stringAfter [
+          in {
+            deps = [
               "users"
               "groups"
               "specialfs"
-            ] "${recov}";
+            ];
+            supportsDryActivation = false;
+            text = recov;
+          };
         };
       };
     };
